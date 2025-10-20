@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Calculadora de consumo energético — MCU + sensores</title>
+  <style>
+    :root{--bg:#0f1724;--card:#0b1220;--muted:#94a3b8;--accent:#7c3aed;--glass:rgba(255,255,255,0.03)}
+    *{box-sizing:border-box;font-family:Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial}
+    body{margin:0;background:linear-gradient(180deg,#061022 0%, #071428 60%);color:#e6eef8;padding:28px}
+    .wrap{max-width:980px;margin:0 auto}
+    header{display:flex;align-items:center;gap:16px;margin-bottom:18px}
+    h1{font-size:20px;margin:0}
+    p.lead{margin:0;color:var(--muted);font-size:13px}
+
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:12px;padding:16px;box-shadow:0 6px 18px rgba(2,6,23,0.6)}
+
+    .grid{display:grid;grid-template-columns:1fr 320px;gap:16px}
+
+    .controls{padding:10px 12px}
+    label{display:block;font-size:13px;color:var(--muted);margin-top:8px}
+    input[type="number"],input[type="text"],select{width:100%;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:14px}
+
+    table{width:100%;border-collapse:collapse;margin-top:12px}
+    th,td{padding:8px 6px;text-align:left;font-size:13px}
+    thead th{font-size:12px;color:var(--muted);border-bottom:1px dashed rgba(255,255,255,0.03)}
+    tbody tr{background:transparent}
+    .mini{font-size:12px;color:var(--muted)}
+
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;border:0;background:linear-gradient(90deg,var(--accent),#4f46e5);color:white;cursor:pointer}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04)}
+    .row-actions{display:flex;gap:8px}
+
+    .results{padding:12px}
+    .stat{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:10px;background:rgba(255,255,255,0.02);margin-bottom:8px}
+    .muted{color:var(--muted);font-size:13px}
+
+    footer{margin-top:12px;color:var(--muted);font-size:13px}
+
+    @media (max-width:880px){.grid{grid-template-columns:1fr;}.card{padding:12px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="card" style="padding:12px">
+        <h1>Calculadora de consumo energético — MCU + sensores</h1>
+        <p class="lead">Calcula consumo medio, potencia y autonomía de una batería. Pensado para ESP32, sensores y actuadores.</p>
+      </div>
+    </header>
+
+    <div class="grid">
+      <section class="card controls">
+        <h3>Parámetros de batería y conversión</h3>
+        <label>Capacidad (mAh)</label>
+        <input id="batt_mAh" type="number" value="6800" min="1" />
+        <label>Voltaje nominal batería (V)</label>
+        <input id="batt_V" type="number" step="0.1" value="3.7" />
+        <label>Eficiencia conversión (0-1)</label>
+        <input id="eff" type="number" step="0.01" value="0.90" min="0.5" max="1" />
+
+        <h3 style="margin-top:12px">Componentes / dispositivos</h3>
+
+        <table class="mini" aria-label="tabla componentes">
+          <thead>
+            <tr><th>Nombre</th><th>V (V)</th><th>I (mA)</th><th>Duty %</th><th></th></tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+
+        <div style="margin-top:8px;display:flex;gap:8px">
+          <button class="btn" id="addRow">+ Añadir componente</button>
+          <button class="btn ghost" id="clearAll">Limpiar</button>
+        </div>
+
+        <div style="margin-top:12px">
+          <label>Comentarios / nota (opcional)</label>
+          <input id="note" type="text" placeholder="ej. medir corriente real con INA219" />
+        </div>
+      </section>
+
+      <aside class="card results">
+        <h3>Resultados</h3>
+        <div class="stat">
+          <div>
+            <div class="muted">Corriente media total (mA)</div>
+            <div id="I_total_mA" style="font-weight:700;font-size:18px">—</div>
+          </div>
+          <div class="muted">Suma de I·duty</div>
+        </div>
+
+        <div class="stat">
+          <div>
+            <div class="muted">Potencia total en carga (W)</div>
+            <div id="P_total_W" style="font-weight:700;font-size:18px">—</div>
+          </div>
+          <div class="muted">P = Σ(V·I_avg)</div>
+        </div>
+
+        <div class="stat">
+          <div>
+            <div class="muted">Energía batería (Wh)</div>
+            <div id="Wh_batt" style="font-weight:700;font-size:18px">—</div>
+          </div>
+          <div class="muted">Wh = V·Ah</div>
+        </div>
+
+        <div class="stat">
+          <div>
+            <div class="muted">Autonomía (horas) — método Wh</div>
+            <div id="hours_wh" style="font-weight:700;font-size:18px">—</div>
+          </div>
+          <div class="muted">hours = Wh / (P_total/eff)</div>
+        </div>
+
+        <div class="stat">
+          <div>
+            <div class="muted">Autonomía (horas) — método mAh aprox.</div>
+            <div id="hours_mAh" style="font-weight:700;font-size:18px">—</div>
+          </div>
+          <div class="muted">hours ≈ (Ah*1000)/I_total_mA (si mismo V)</div>
+        </div>
+
+        <div style="margin-top:10px;display:flex;gap:8px">
+          <button class="btn" id="calc">Calcular</button>
+          <button class="btn ghost" id="exportCSV">Exportar CSV</button>
+        </div>
+
+        <footer>
+          <div class="muted">Consejo: los resultados son estimaciones. Mide corriente real para precisión (ej. INA219/INA226).</div>
+        </footer>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    // Manejo dinámico de filas
+    const rowsEl = document.getElementById('rows');
+    const addRowBtn = document.getElementById('addRow');
+    const calcBtn = document.getElementById('calc');
+    const clearAllBtn = document.getElementById('clearAll');
+    const exportBtn = document.getElementById('exportCSV');
+
+    function createRow(data={name:'Componente',V:3.3,I:10,duty:100}){
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input class="name" value="${data.name}" /></td>
+        <td><input class="V" type="number" step="0.1" value="${data.V}" /></td>
+        <td><input class="I" type="number" step="0.1" value="${data.I}" /></td>
+        <td><input class="duty" type="number" step="0.1" value="${data.duty}" min="0" max="100" /></td>
+        <td class="row-actions"><button class="btn ghost small del">Eliminar</button></td>
+      `;
+      rowsEl.appendChild(tr);
+      tr.querySelector('.del').addEventListener('click', ()=>{tr.remove();});
+      return tr;
+    }
+
+    addRowBtn.addEventListener('click', ()=>createRow());
+
+    clearAllBtn.addEventListener('click', ()=>{rowsEl.innerHTML='';});
+
+    function readRows(){
+      const trs = Array.from(rowsEl.querySelectorAll('tr'));
+      return trs.map(tr=>({
+        name: tr.querySelector('.name').value || 'comp',
+        V: parseFloat(tr.querySelector('.V').value) || 0,
+        I_mA: parseFloat(tr.querySelector('.I').value) || 0,
+        duty: parseFloat(tr.querySelector('.duty').value) || 100
+      }));
+    }
+
+    function calculate(){
+      const batt_mAh = parseFloat(document.getElementById('batt_mAh').value) || 0;
+      const batt_V = parseFloat(document.getElementById('batt_V').value) || 3.7;
+      const eff = parseFloat(document.getElementById('eff').value) || 0.9;
+
+      const items = readRows();
+      // Corriente media total en mA (sum(I*mDuty))
+      const I_total_mA = items.reduce((s,it)=> s + (it.I_mA * (it.duty/100)), 0);
+
+      // Potencia total (W) = sum(V_i * I_avg_i[A])
+      const P_total_W = items.reduce((s,it)=> s + (it.V * (it.I_mA*(it.duty/100)/1000)), 0);
+
+      // Energía batería Wh
+      const Wh_batt = batt_V * (batt_mAh/1000);
+
+      // Horas por método Wh: hours = Wh_batt / (P_total_W/eff) (si P_total_W=0 -> inf)
+      const hours_wh = P_total_W>0 ? (Wh_batt / (P_total_W / eff)) : Infinity;
+
+      // Horas por método mAh aproximado: assume same V -> hours = (Ah*1000)/I_total_mA
+      const hours_mAh = I_total_mA>0 ? ((batt_mAh) / I_total_mA) : Infinity;
+
+      // Mostrar
+      document.getElementById('I_total_mA').textContent = I_total_mA.toFixed(2) + ' mA';
+      document.getElementById('P_total_W').textContent = P_total_W.toFixed(3) + ' W';
+      document.getElementById('Wh_batt').textContent = Wh_batt.toFixed(2) + ' Wh';
+      document.getElementById('hours_wh').textContent = isFinite(hours_wh) ? hours_wh.toFixed(2) + ' h (' + (hours_wh/24).toFixed(2) + ' d)' : '—';
+      document.getElementById('hours_mAh').textContent = isFinite(hours_mAh) ? hours_mAh.toFixed(2) + ' h (' + (hours_mAh/24).toFixed(2) + ' d)' : '—';
+
+      return {items, batt_mAh, batt_V, eff, I_total_mA, P_total_W, Wh_batt, hours_wh, hours_mAh};
+    }
+
+    calcBtn.addEventListener('click', ()=> calculate());
+
+    // Export CSV simple
+    exportBtn.addEventListener('click', ()=>{
+      const res = calculate();
+      const rows = res.items.map(it => [it.name, it.V, it.I_mA, it.duty]);
+      let csv = 'name,V(I),I_mA,duty%\n';
+      rows.forEach(r=>{csv += r.join(',')+'\n'});
+      csv += '\n#SUMMARY\n';
+      csv += `batt_mAh,${res.batt_mAh}\n`;
+      csv += `batt_V,${res.batt_V}\n`;
+      csv += `eff,${res.eff}\n`;
+      csv += `I_total_mA,${res.I_total_mA}\n`;
+      csv += `P_total_W,${res.P_total_W}\n`;
+      csv += `Wh_batt,${res.Wh_batt}\n`;
+      csv += `hours_wh,${res.hours_wh}\n`;
+      csv += `hours_mAh,${res.hours_mAh}\n`;
+
+      const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'consumo_export.csv'; document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    });
+
+    // Inicializar con un par de filas útiles
+    createRow({name:'ESP32 (Wi‑Fi)',V:3.3,I:120,duty:100});
+    createRow({name:'HC‑SR04 (siempre ON)',V:5.0,I:15,duty:100});
+    // calcular inicial
+    calculate();
+  </script>
+</body>
+</html>
