@@ -51,7 +51,14 @@
 
     <div class="grid">
       <section class="card controls">
-        <h3>Parámetros de batería y conversión</h3>
+        <h3>Importar desde Wokwi</h3>
+        <label>URL del proyecto Wokwi (opcional, para referencia)</label>
+        <input id="wokwi_url" type="text" placeholder="https://wokwi.com/projects/..." />
+        <label>Pegar diagram.json de Wokwi</label>
+        <textarea id="wokwi_json" rows="4" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:12px;font-family:monospace" placeholder='{"version": 1, "parts": [...], "connections": [...]}'></textarea>
+        <button class="btn" id="parseWokwi" style="margin-top:8px">Cargar desde Wokwi</button>
+
+        <h3 style="margin-top:16px">Parámetros de batería y conversión</h3>
         <label>Capacidad (mAh)</label>
         <input id="batt_mAh" type="number" value="6800" min="1" />
         <label>Voltaje nominal batería (V)</label>
@@ -134,12 +141,58 @@
   </div>
 
   <script>
+    // Base de datos de consumo típico de componentes Wokwi
+    const WOKWI_COMPONENT_SPECS = {
+      // Microcontroladores
+      'wokwi-arduino-uno': { name: 'Arduino UNO', V: 5.0, I: 45, duty: 100 },
+      'wokwi-arduino-nano': { name: 'Arduino Nano', V: 5.0, I: 19, duty: 100 },
+      'wokwi-arduino-mega': { name: 'Arduino Mega', V: 5.0, I: 50, duty: 100 },
+      'wokwi-esp32-devkit-v1': { name: 'ESP32 DevKit', V: 3.3, I: 160, duty: 100 },
+      'board-esp32-c3-devkitm-1': { name: 'ESP32-C3', V: 3.3, I: 120, duty: 100 },
+      'board-esp32-s2-devkitm-1': { name: 'ESP32-S2', V: 3.3, I: 140, duty: 100 },
+      'board-esp32-s3-devkitc-1': { name: 'ESP32-S3', V: 3.3, I: 150, duty: 100 },
+      'board-esp32-c6-devkitc-1': { name: 'ESP32-C6', V: 3.3, I: 130, duty: 100 },
+      'wokwi-pi-pico': { name: 'Raspberry Pi Pico', V: 3.3, I: 100, duty: 100 },
+      'board-franzininho-wifi': { name: 'Franzininho WiFi', V: 3.3, I: 150, duty: 100 },
+
+      // Sensores
+      'wokwi-dht22': { name: 'DHT22', V: 3.3, I: 2.5, duty: 10 },
+      'wokwi-ds1307': { name: 'RTC DS1307', V: 5.0, I: 1.5, duty: 100 },
+      'wokwi-pir-motion-sensor': { name: 'PIR Motion', V: 5.0, I: 0.065, duty: 10 },
+      'wokwi-hc-sr04': { name: 'HC-SR04', V: 5.0, I: 15, duty: 10 },
+      'wokwi-mpu6050': { name: 'MPU6050', V: 3.3, I: 3.5, duty: 100 },
+      'wokwi-bmp280': { name: 'BMP280', V: 3.3, I: 0.71, duty: 10 },
+
+      // Displays
+      'wokwi-lcd1602': { name: 'LCD 16x2', V: 5.0, I: 100, duty: 100 },
+      'wokwi-lcd2004': { name: 'LCD 20x4', V: 5.0, I: 120, duty: 100 },
+      'wokwi-ssd1306': { name: 'OLED SSD1306', V: 3.3, I: 20, duty: 100 },
+      'wokwi-max7219-matrix': { name: 'LED Matrix 8x8', V: 5.0, I: 200, duty: 100 },
+      'wokwi-tm1637-7segment': { name: 'TM1637 7-seg', V: 5.0, I: 80, duty: 100 },
+
+      // Actuadores
+      'wokwi-servo': { name: 'Servo Motor', V: 5.0, I: 500, duty: 20 },
+      'wokwi-buzzer': { name: 'Buzzer', V: 5.0, I: 30, duty: 10 },
+      'wokwi-relay-module': { name: 'Relay Module', V: 5.0, I: 70, duty: 50 },
+      'wokwi-stepper-motor': { name: 'Stepper Motor', V: 12, I: 600, duty: 30 },
+
+      // Componentes pasivos y activos
+      'wokwi-led': { name: 'LED', V: 2.0, I: 20, duty: 100 },
+      'wokwi-rgb-led': { name: 'RGB LED', V: 2.0, I: 60, duty: 100 },
+      'wokwi-neopixel': { name: 'NeoPixel LED', V: 5.0, I: 60, duty: 100 },
+      'wokwi-led-bar-graph': { name: 'LED Bar Graph', V: 2.0, I: 200, duty: 100 },
+
+      // Módulos de comunicación
+      'wokwi-nrf24l01': { name: 'NRF24L01', V: 3.3, I: 13.5, duty: 30 },
+    };
+
     // Manejo dinámico de filas
     const rowsEl = document.getElementById('rows');
     const addRowBtn = document.getElementById('addRow');
     const calcBtn = document.getElementById('calc');
     const clearAllBtn = document.getElementById('clearAll');
     const exportBtn = document.getElementById('exportCSV');
+    const parseWokwiBtn = document.getElementById('parseWokwi');
 
     function createRow(data={name:'Componente',V:3.3,I:10,duty:100}){
       const tr = document.createElement('tr');
@@ -224,6 +277,83 @@
       a.href = url; a.download = 'consumo_export.csv'; document.body.appendChild(a); a.click(); a.remove();
       URL.revokeObjectURL(url);
     });
+
+    // Función para parsear y cargar proyecto Wokwi
+    function parseWokwiProject() {
+      const wokwiJsonText = document.getElementById('wokwi_json').value.trim();
+      const wokwiUrl = document.getElementById('wokwi_url').value.trim();
+
+      if (!wokwiJsonText) {
+        alert('Por favor, pega el contenido de diagram.json en el campo de texto.');
+        return;
+      }
+
+      try {
+        const diagram = JSON.parse(wokwiJsonText);
+
+        if (!diagram.parts || !Array.isArray(diagram.parts)) {
+          alert('El JSON no parece ser un diagram.json válido de Wokwi. Debe contener un array "parts".');
+          return;
+        }
+
+        // Limpiar tabla actual
+        rowsEl.innerHTML = '';
+
+        // Contador de componentes encontrados y no encontrados
+        let found = 0;
+        let notFound = 0;
+        const notFoundTypes = new Set();
+
+        // Procesar cada parte del diagrama
+        diagram.parts.forEach(part => {
+          const partType = part.type;
+
+          if (WOKWI_COMPONENT_SPECS[partType]) {
+            const spec = WOKWI_COMPONENT_SPECS[partType];
+            // Crear una copia del spec para poder modificar el nombre si hay attrs
+            const componentData = { ...spec };
+
+            // Si el componente tiene un nombre personalizado en attrs, usarlo
+            if (part.attrs && part.attrs.label) {
+              componentData.name = `${spec.name} (${part.attrs.label})`;
+            } else if (part.id) {
+              componentData.name = `${spec.name} (${part.id})`;
+            }
+
+            createRow(componentData);
+            found++;
+          } else {
+            // Componentes no reconocidos (resistores, capacitores, etc.)
+            notFound++;
+            notFoundTypes.add(partType);
+          }
+        });
+
+        // Mostrar resumen
+        let message = `✓ Se cargaron ${found} componente(s) desde el proyecto Wokwi.`;
+        if (notFound > 0) {
+          message += `\n\nℹ ${notFound} componente(s) no fueron agregados (componentes pasivos o no reconocidos):\n`;
+          message += Array.from(notFoundTypes).join(', ');
+          message += '\n\nPuedes agregar estos componentes manualmente si consumen energía.';
+        }
+
+        if (wokwiUrl) {
+          message += `\n\n🔗 Proyecto: ${wokwiUrl}`;
+        }
+
+        alert(message);
+
+        // Calcular automáticamente después de cargar
+        if (found > 0) {
+          calculate();
+        }
+
+      } catch (error) {
+        alert(`Error al parsear el JSON: ${error.message}\n\nAsegúrate de pegar el contenido completo del archivo diagram.json.`);
+      }
+    }
+
+    parseWokwiBtn.addEventListener('click', parseWokwiProject);
 
     // Inicializar con un par de filas útiles
     createRow({name:'ESP32 (Wi‑Fi)',V:3.3,I:120,duty:100});
