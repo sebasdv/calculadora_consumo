@@ -4,22 +4,38 @@ Una herramienta web para calcular el consumo energético, potencia y autonomía 
 
 ## Características
 
+- **Integración con Wokwi**: Importa componentes directamente desde proyectos Wokwi
 - **Cálculo de consumo energético**: Estimación precisa del consumo medio de corriente
 - **Análisis de potencia**: Cálculo de potencia total en carga
 - **Autonomía de batería**: Dos métodos de cálculo (Wh y mAh aproximado)
 - **Múltiples componentes**: Soporte para agregar varios dispositivos y sensores
 - **Duty cycle**: Consideración del ciclo de trabajo de cada componente
+- **Base de datos de componentes**: +30 componentes comunes con valores típicos de consumo
 - **Exportación de datos**: Exportar resultados a formato CSV
 - **Interfaz responsiva**: Diseño moderno y adaptable a diferentes dispositivos
 
 ## Uso
+
+### Método 1: Importar desde Wokwi
+
+1. Abre tu proyecto en [Wokwi](https://wokwi.com)
+2. En el editor de Wokwi, abre la pestaña `diagram.json`
+3. Copia todo el contenido del archivo
+4. En la calculadora, pega el JSON en el campo "Pegar diagram.json de Wokwi"
+5. (Opcional) Pega la URL del proyecto para referencia
+6. Haz clic en "Cargar desde Wokwi"
+7. La calculadora detectará automáticamente los componentes y sus valores de consumo típicos
+8. Ajusta los valores de duty cycle según el comportamiento de tu proyecto
+9. Haz clic en "Calcular" para obtener los resultados
+
+### Método 2: Entrada manual
 
 1. Abre `index.html` en tu navegador web
 2. Configura los parámetros de la batería:
    - Capacidad en mAh
    - Voltaje nominal
    - Eficiencia de conversión
-3. Agrega componentes y dispositivos:
+3. Agrega componentes y dispositivos manualmente:
    - Nombre del componente
    - Voltaje de operación
    - Corriente de consumo
@@ -50,10 +66,47 @@ La calculadora proporciona los siguientes valores:
 - **Autonomía (método Wh)**: Tiempo de funcionamiento calculado por energía
 - **Autonomía (método mAh)**: Tiempo aproximado basado en capacidad de corriente
 
+## Componentes Wokwi Soportados
+
+La calculadora incluye valores típicos de consumo para más de 30 componentes Wokwi:
+
+### Microcontroladores
+- Arduino UNO, Nano, Mega
+- ESP32 (DevKit, C3, S2, S3, C6)
+- Raspberry Pi Pico
+- Franzininho WiFi
+
+### Sensores
+- DHT22 (temperatura y humedad)
+- HC-SR04 (ultrasonido)
+- MPU6050 (acelerómetro/giroscopio)
+- BMP280 (presión/temperatura)
+- PIR Motion Sensor
+- RTC DS1307
+
+### Displays
+- LCD 16x2 y 20x4
+- OLED SSD1306
+- LED Matrix 8x8 (MAX7219)
+- Display 7 segmentos TM1637
+
+### Actuadores
+- Servo motores
+- Motores paso a paso
+- Buzzer
+- Módulos relay
+
+### Otros
+- LEDs (simples, RGB, NeoPixel, bar graph)
+- Módulos de comunicación (NRF24L01)
+
+**Nota**: Los componentes pasivos (resistores, capacitores, cables) no se importan automáticamente ya que no consumen energía significativa.
+
 ## Casos de Uso
 
 Esta herramienta es especialmente útil para:
 
+- **Simulaciones Wokwi**: Calcula el consumo de tus prototipos virtuales antes de construirlos
 - Proyectos con ESP32 y sensores IoT
 - Sistemas embebidos con múltiples componentes
 - Estimación de autonomía en dispositivos portátiles
@@ -63,9 +116,12 @@ Esta herramienta es especialmente útil para:
 ## Consideraciones Técnicas
 
 - Los resultados son estimaciones basadas en valores teóricos
+- **Importación de Wokwi**: Los valores de consumo son típicos para cada componente. Ajusta según tu caso específico
+- **Duty cycle**: Los componentes importados tienen duty cycles por defecto, pero debes ajustarlos según el comportamiento real de tu código
 - Para mediciones precisas, se recomienda usar sensores de corriente como INA219 o INA226
 - La eficiencia de conversión debe ajustarse según el regulador de voltaje utilizado
 - El duty cycle es crucial para componentes que no funcionan continuamente
+- Los valores de consumo pueden variar según el modo de operación (ej: ESP32 en deep sleep vs. WiFi activo)
 
 ## Tecnologías Utilizadas
 
