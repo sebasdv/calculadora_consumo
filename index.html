@@ -15,6 +15,7 @@
       overflow: hidden;
       display: flex;
       flex-direction: column;
+      background-color: #d9d2c6;
     }
 
     /* Navigation bar */
@@ -82,17 +83,17 @@
 
     .col-left {
       flex: 0 0 320px;
-      background: var(--gb-primary);
+      background: #d9d2c6;
     }
 
     .col-center {
       flex: 1;
-      background: var(--gb-primary);
+      background: #d9d2c6;
     }
 
     .col-right {
       flex: 0 0 340px;
-      background: var(--gb-secondary);
+      background: #d9d2c6;
       border-right: none;
     }
 
@@ -250,30 +251,51 @@
       flex-shrink: 0;
     }
 
-    /* Theme toggle */
+    /* Theme toggle - matches master page design */
+    .theme-toggle-wrapper {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+
+    .theme-toggle-label {
+      font-size: var(--font-size-xs);
+      color: var(--gb-text-inverse);
+      text-transform: uppercase;
+      font-weight: bold;
+    }
+
     .theme-toggle {
       position: relative;
-      width: 50px;
-      height: 24px;
+      width: 60px;
+      height: 28px;
       background: var(--gb-secondary);
       border: var(--border-width) solid var(--gb-border);
       cursor: pointer;
-      transition: var(--transition-fast);
+      transition: var(--transition-normal);
+    }
+
+    .theme-toggle:hover {
+      background: var(--gb-accent);
     }
 
     .theme-toggle-slider {
       position: absolute;
-      top: 2px;
-      left: 2px;
-      width: 16px;
-      height: 16px;
-      background: var(--gb-primary);
-      transition: var(--transition-fast);
+      top: 3px;
+      left: 3px;
+      width: 20px;
+      height: 20px;
+      background: var(--gb-dark);
+      transition: var(--transition-normal);
+    }
+
+    .theme-toggle.active {
+      background: var(--gb-accent);
     }
 
     .theme-toggle.active .theme-toggle-slider {
-      transform: translateX(24px);
-      background: var(--gb-dark);
+      transform: translateX(32px);
+      background: var(--gb-primary);
     }
 
     /* Responsive */
@@ -318,8 +340,11 @@
     <div class="navbar-nav">
       <a href="#" class="nav-link active">Calculator</a>
       <a href="https://github.com/sebasdv/calculadora_consumo" class="nav-link" target="_blank">GitHub</a>
-      <div class="theme-toggle" id="themeToggle">
-        <div class="theme-toggle-slider"></div>
+      <div class="theme-toggle-wrapper">
+        <span class="theme-toggle-label">DARK MODE</span>
+        <div class="theme-toggle" id="themeToggle">
+          <div class="theme-toggle-slider"></div>
+        </div>
       </div>
     </div>
   </nav>
