@@ -4,240 +4,253 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Calculadora de consumo energético — MCU + sensores</title>
-  <link rel="stylesheet" href="sebasdv-design-system.css" />
+  <link rel="stylesheet" href="https://sebasdv.github.io/sebasdv-design-system/sebasdv-design-system.css" />
   <style>
-    /* === NO-SCROLL LAYOUT === */
+    /* === POWER CALCULATOR CUSTOM STYLES === */
+
+    /* Page layout */
     body {
-      padding: var(--spacing-xs);
+      padding: 0;
       height: 100vh;
       overflow: hidden;
       display: flex;
       flex-direction: column;
     }
 
-    .container {
+    /* Navigation bar */
+    .navbar {
+      background: var(--gb-dark);
+      border-bottom: var(--border-width) solid var(--gb-border);
+      padding: var(--spacing-sm) var(--spacing-md);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .navbar-brand {
+      font-size: var(--font-size-lg);
+      color: var(--gb-text-inverse);
+      font-family: 'Press Start 2P', monospace;
+      text-transform: uppercase;
+    }
+
+    .navbar-nav {
+      display: flex;
+      gap: var(--spacing-md);
+      align-items: center;
+    }
+
+    .nav-link {
+      font-size: var(--font-size-xs);
+      color: var(--gb-text-inverse);
+      text-decoration: none;
+      text-transform: uppercase;
+      padding: var(--spacing-xs) var(--spacing-sm);
+      border: var(--border-width) solid transparent;
+      transition: var(--transition-fast);
+    }
+
+    .nav-link:hover {
+      border-color: var(--gb-primary);
+      background: var(--gb-accent);
+    }
+
+    .nav-link.active {
+      border-color: var(--gb-primary);
+      background: var(--gb-accent);
+    }
+
+    /* Main container */
+    .main-container {
       flex: 1;
       display: flex;
-      flex-direction: column;
-      max-height: 100vh;
-      overflow: hidden;
-      padding: 0;
-    }
-
-    /* === COMPACT HEADER === */
-    .page-header {
-      flex-shrink: 0;
-      margin-bottom: var(--spacing-xs);
-    }
-
-    .page-header .card {
-      margin-bottom: 0;
-      padding: var(--spacing-sm);
-    }
-
-    .page-header h1 {
-      font-size: var(--font-size-lg);
-      margin-bottom: var(--spacing-2xs);
-    }
-
-    .lead {
-      font-size: var(--font-size-xs);
-      color: var(--gb-text-secondary);
-      line-height: 1.4;
-      margin-bottom: 0;
-    }
-
-    /* === THREE COLUMN GRID === */
-    .calc-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr 340px;
-      gap: var(--spacing-xs);
-      flex: 1;
       overflow: hidden;
       min-height: 0;
     }
 
-    /* === COMPACT CARDS === */
-    .card {
-      padding: var(--spacing-sm);
-      margin-bottom: 0;
+    /* Three column layout */
+    .col-left,
+    .col-center,
+    .col-right {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      padding: var(--spacing-md);
+      border-right: var(--border-width) solid var(--gb-border);
+    }
+
+    .col-left {
+      flex: 0 0 320px;
+      background: var(--gb-primary);
+    }
+
+    .col-center {
+      flex: 1;
+      background: var(--gb-primary);
+    }
+
+    .col-right {
+      flex: 0 0 340px;
+      background: var(--gb-secondary);
+      border-right: none;
+    }
+
+    /* Card styling */
+    .panel {
+      background: var(--gb-primary);
+      border: var(--border-width) solid var(--gb-border);
+      padding: var(--spacing-md);
+      margin-bottom: var(--spacing-md);
       display: flex;
       flex-direction: column;
       overflow: hidden;
     }
 
-    .card-header {
+    .panel-header {
       font-size: var(--font-size-md);
-      margin-bottom: var(--spacing-xs);
-      padding-bottom: var(--spacing-2xs);
+      font-weight: bold;
+      margin-bottom: var(--spacing-sm);
+      padding-bottom: var(--spacing-xs);
+      border-bottom: var(--border-width) solid var(--gb-border);
+      color: var(--gb-text-primary);
+      text-transform: uppercase;
+      flex-shrink: 0;
     }
 
-    .card-header h2 {
-      font-size: var(--font-size-md);
-      margin-bottom: 0;
-    }
-
-    /* === SCROLLABLE SECTIONS === */
-    .scrollable-content {
-      overflow-y: auto;
+    .panel-body {
       flex: 1;
-      padding-right: var(--spacing-2xs);
+      overflow-y: auto;
+      overflow-x: hidden;
     }
 
-    .scrollable-content::-webkit-scrollbar {
+    /* Scrollbar styling */
+    .panel-body::-webkit-scrollbar {
       width: 6px;
     }
 
-    .scrollable-content::-webkit-scrollbar-track {
+    .panel-body::-webkit-scrollbar-track {
       background: var(--gb-secondary);
     }
 
-    .scrollable-content::-webkit-scrollbar-thumb {
+    .panel-body::-webkit-scrollbar-thumb {
       background: var(--gb-accent);
       border-radius: 3px;
     }
 
-    /* === COMPACT FORMS === */
-    .form-group {
-      margin-bottom: var(--spacing-xs);
+    /* Form elements */
+    .form-row {
+      margin-bottom: var(--spacing-sm);
     }
 
-    label {
+    .form-row label {
+      display: block;
       font-size: var(--font-size-xs);
       margin-bottom: var(--spacing-2xs);
+      color: var(--gb-text-primary);
     }
 
-    input, textarea {
+    .form-row input,
+    .form-row textarea {
+      width: 100%;
       font-size: var(--font-size-xs);
-      padding: var(--spacing-2xs) var(--spacing-xs);
-      min-height: 32px;
+      padding: var(--spacing-xs);
+      min-height: 36px;
     }
 
-    textarea {
-      min-height: 60px;
-      resize: none;
+    .form-row textarea {
+      min-height: 70px;
+      resize: vertical;
     }
 
-    /* === COMPACT TABLE === */
+    /* Table compact */
     table {
+      width: 100%;
       font-size: var(--font-size-xs);
-      margin-top: var(--spacing-xs);
-      margin-bottom: var(--spacing-xs);
+      border-collapse: collapse;
+      margin: var(--spacing-sm) 0;
     }
 
-    th, td {
-      padding: var(--spacing-2xs);
-    }
-
-    /* === COMPACT BUTTONS === */
-    .btn, button {
-      font-size: var(--font-size-xs);
+    table th,
+    table td {
       padding: var(--spacing-2xs) var(--spacing-xs);
-      min-height: 32px;
-      min-width: auto;
-      margin-right: var(--spacing-2xs);
-      margin-bottom: var(--spacing-2xs);
+      border: 1px solid var(--gb-border);
+      text-align: left;
     }
 
-    /* === COMPACT STATS === */
-    .stat {
+    table thead th {
       background: var(--gb-dark);
       color: var(--gb-text-inverse);
-      padding: var(--spacing-xs);
-      margin-bottom: var(--spacing-2xs);
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    table tbody tr:nth-child(even) {
+      background: var(--gb-secondary);
+    }
+
+    table input {
+      width: 100%;
+      margin: 0;
+      min-height: 28px;
+    }
+
+    /* Stats display */
+    .stat-box {
+      background: var(--gb-dark);
+      color: var(--gb-text-inverse);
+      padding: var(--spacing-sm);
+      margin-bottom: var(--spacing-sm);
       border: var(--border-width) solid var(--gb-border);
     }
 
     .stat-label {
       font-size: var(--font-size-xs);
-      margin-bottom: var(--spacing-2xs);
       opacity: 0.8;
+      margin-bottom: var(--spacing-2xs);
       text-transform: uppercase;
-      line-height: 1.2;
     }
 
     .stat-value {
-      font-size: var(--font-size-lg);
+      font-size: var(--font-size-xl);
       font-weight: bold;
-      text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
-      line-height: 1.1;
+      line-height: 1.2;
+      margin-bottom: var(--spacing-2xs);
     }
 
     .stat-formula {
       font-size: 0.65rem;
-      margin-top: var(--spacing-2xs);
       opacity: 0.6;
-      line-height: 1.2;
+      font-style: italic;
     }
 
-    /* === COMPACT FOOTER === */
-    footer {
-      padding: var(--spacing-2xs);
-      margin-top: var(--spacing-xs);
-      font-size: 0.65rem;
-      line-height: 1.3;
-    }
-
-    footer p {
-      margin-bottom: 0;
-    }
-
-    /* === SECTION DIVIDERS === */
-    .section-divider {
-      border-top: var(--border-width) solid var(--gb-border);
-      margin-top: var(--spacing-xs);
-      padding-top: var(--spacing-xs);
-    }
-
-    /* === RESPONSIVE BREAKPOINT === */
-    @media (max-width: 1400px) {
-      .calc-grid {
-        grid-template-columns: 1fr 300px;
-      }
-
-      .wokwi-section {
-        grid-column: 1;
-      }
-
-      .battery-components-section {
-        grid-column: 1;
-      }
-
-      .results {
-        grid-column: 2;
-        grid-row: 1 / 3;
-      }
-    }
-
-    @media (max-width: 768px) {
-      body {
-        overflow-y: auto;
-        height: auto;
-      }
-
-      .calc-grid {
-        grid-template-columns: 1fr;
-        overflow-y: auto;
-      }
-
-      .results {
-        grid-column: 1;
-        grid-row: auto;
-      }
-
-      .scrollable-content {
-        overflow-y: visible;
-      }
-    }
-
-    /* === DARK MODE TOGGLE === */
-    .theme-toggle-wrapper {
+    /* Button groups */
+    .btn-group {
       display: flex;
-      align-items: center;
       gap: var(--spacing-xs);
-      margin-left: auto;
+      flex-wrap: wrap;
+      margin: var(--spacing-sm) 0;
     }
 
+    /* Compact buttons */
+    .btn {
+      font-size: var(--font-size-xs);
+      padding: var(--spacing-xs) var(--spacing-sm);
+      min-height: 32px;
+      min-width: auto;
+    }
+
+    /* Footer */
+    .panel-footer {
+      margin-top: var(--spacing-sm);
+      padding-top: var(--spacing-sm);
+      border-top: var(--border-width) solid var(--gb-border);
+      font-size: 0.65rem;
+      opacity: 0.8;
+      flex-shrink: 0;
+    }
+
+    /* Theme toggle */
     .theme-toggle {
       position: relative;
       width: 50px;
@@ -254,165 +267,185 @@
       left: 2px;
       width: 16px;
       height: 16px;
-      background: var(--gb-dark);
+      background: var(--gb-primary);
       transition: var(--transition-fast);
     }
 
     .theme-toggle.active .theme-toggle-slider {
       transform: translateX(24px);
+      background: var(--gb-dark);
     }
 
-    .theme-toggle-label {
-      font-size: var(--font-size-xs);
-      text-transform: uppercase;
-      user-select: none;
+    /* Responsive */
+    @media (max-width: 1200px) {
+      .col-left {
+        flex: 0 0 280px;
+      }
+      .col-right {
+        flex: 0 0 300px;
+      }
     }
 
-    .page-header .card {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
+    @media (max-width: 768px) {
+      body {
+        overflow-y: auto;
+        height: auto;
+      }
 
-    .header-content {
-      flex: 1;
+      .main-container {
+        flex-direction: column;
+        overflow-y: auto;
+      }
+
+      .col-left,
+      .col-center,
+      .col-right {
+        flex: 1;
+        border-right: none;
+        border-bottom: var(--border-width) solid var(--gb-border);
+      }
+
+      .panel-body {
+        overflow-y: visible;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <!-- Compact Header -->
-    <header class="page-header">
-      <div class="card">
-        <div class="header-content">
-          <h1>POWER CALC</h1>
-          <p class="lead">Calculadora de consumo energético para MCU, sensores y actuadores con integración Wokwi</p>
-        </div>
-        <div class="theme-toggle-wrapper">
-          <span class="theme-toggle-label">DARK</span>
-          <div class="theme-toggle" id="themeToggle">
-            <div class="theme-toggle-slider"></div>
-          </div>
-        </div>
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <div class="navbar-brand">POWER CALC</div>
+    <div class="navbar-nav">
+      <a href="#" class="nav-link active">Calculator</a>
+      <a href="https://github.com/sebasdv/calculadora_consumo" class="nav-link" target="_blank">GitHub</a>
+      <div class="theme-toggle" id="themeToggle">
+        <div class="theme-toggle-slider"></div>
       </div>
-    </header>
+    </div>
+  </nav>
 
-    <!-- Three Column Layout -->
-    <div class="calc-grid">
+  <!-- Three Column Layout -->
+  <div class="main-container">
 
-      <!-- Column 1: Wokwi Import -->
-      <section class="card wokwi-section">
-        <div class="card-header">
-          <h2>WOKWI IMPORT</h2>
-        </div>
-        <div class="scrollable-content">
-          <div class="form-group">
-            <label>URL (opcional)</label>
+    <!-- Left Column: Wokwi Import -->
+    <div class="col-left">
+      <div class="panel">
+        <div class="panel-header">WOKWI IMPORT</div>
+        <div class="panel-body">
+          <div class="form-row">
+            <label>URL del proyecto (opcional)</label>
             <input id="wokwi_url" type="text" placeholder="https://wokwi.com/projects/..." />
           </div>
 
-          <div class="form-group">
-            <label>diagram.json</label>
-            <textarea id="wokwi_json" rows="3" placeholder='{"version": 1, "parts": [...]}'></textarea>
+          <div class="form-row">
+            <label>Pegar diagram.json</label>
+            <textarea id="wokwi_json" placeholder='{"version": 1, "parts": [...], "connections": [...]}'></textarea>
           </div>
 
-          <button class="btn btn-primary" id="parseWokwi">CARGAR</button>
+          <div class="btn-group">
+            <button class="btn btn-primary" id="parseWokwi">CARGAR WOKWI</button>
+          </div>
         </div>
-      </section>
+      </div>
+    </div>
 
-      <!-- Column 2: Battery & Components -->
-      <section class="card battery-components-section">
-        <div class="card-header">
-          <h2>BATERIA & COMPONENTES</h2>
-        </div>
-        <div class="scrollable-content">
-
-          <!-- Battery Section -->
-          <div class="form-group">
+    <!-- Center Column: Battery & Components -->
+    <div class="col-center">
+      <div class="panel">
+        <div class="panel-header">CONFIGURACION BATERIA</div>
+        <div class="panel-body">
+          <div class="form-row">
             <label>Capacidad (mAh)</label>
             <input id="batt_mAh" type="number" value="6800" min="1" />
           </div>
 
-          <div class="form-group">
-            <label>Voltaje (V)</label>
+          <div class="form-row">
+            <label>Voltaje nominal (V)</label>
             <input id="batt_V" type="number" step="0.1" value="3.7" />
           </div>
 
-          <div class="form-group">
-            <label>Eficiencia</label>
+          <div class="form-row">
+            <label>Eficiencia (0-1)</label>
             <input id="eff" type="number" step="0.01" value="0.90" min="0.5" max="1" />
           </div>
+        </div>
+      </div>
 
-          <div class="section-divider"></div>
-
-          <!-- Components Table -->
+      <div class="panel">
+        <div class="panel-header">COMPONENTES</div>
+        <div class="panel-body">
           <table aria-label="tabla componentes">
             <thead>
-              <tr><th>Nombre</th><th>V</th><th>mA</th><th>Duty%</th><th></th></tr>
+              <tr>
+                <th>Nombre</th>
+                <th>V</th>
+                <th>mA</th>
+                <th>Duty%</th>
+                <th>Accion</th>
+              </tr>
             </thead>
             <tbody id="rows"></tbody>
           </table>
 
-          <div class="flex flex-wrap gap-xs">
-            <button class="btn" id="addRow">+ AÑADIR</button>
+          <div class="btn-group">
+            <button class="btn" id="addRow">AÑADIR</button>
             <button class="btn btn-secondary" id="clearAll">LIMPIAR</button>
           </div>
 
-          <div class="form-group">
-            <label>Notas</label>
-            <input id="note" type="text" placeholder="ej. medir con INA219" />
+          <div class="form-row">
+            <label>Notas adicionales</label>
+            <input id="note" type="text" placeholder="ej. mediciones con INA219" />
           </div>
         </div>
-      </section>
+      </div>
+    </div>
 
-      <!-- Column 3: Results -->
-      <aside class="card results">
-        <div class="card-header">
-          <h2>RESULTADOS</h2>
-        </div>
-        <div class="scrollable-content">
-          <div class="stat">
-            <div class="stat-label">Corriente Total</div>
+    <!-- Right Column: Results -->
+    <div class="col-right">
+      <div class="panel">
+        <div class="panel-header">RESULTADOS</div>
+        <div class="panel-body">
+          <div class="stat-box">
+            <div class="stat-label">Corriente Media Total</div>
             <div class="stat-value" id="I_total_mA">—</div>
             <div class="stat-formula">Σ(I·duty)</div>
           </div>
 
-          <div class="stat">
-            <div class="stat-label">Potencia</div>
+          <div class="stat-box">
+            <div class="stat-label">Potencia Total</div>
             <div class="stat-value" id="P_total_W">—</div>
-            <div class="stat-formula">Σ(V·I_avg)</div>
+            <div class="stat-formula">P = Σ(V·I_avg)</div>
           </div>
 
-          <div class="stat">
-            <div class="stat-label">Energía Bat.</div>
+          <div class="stat-box">
+            <div class="stat-label">Energia Bateria</div>
             <div class="stat-value" id="Wh_batt">—</div>
-            <div class="stat-formula">V·Ah</div>
+            <div class="stat-formula">Wh = V·Ah</div>
           </div>
 
-          <div class="stat">
-            <div class="stat-label">Autonomía Wh</div>
+          <div class="stat-box">
+            <div class="stat-label">Autonomia (Wh)</div>
             <div class="stat-value" id="hours_wh">—</div>
-            <div class="stat-formula">Wh/(P/eff)</div>
+            <div class="stat-formula">hrs = Wh/(P/eff)</div>
           </div>
 
-          <div class="stat">
-            <div class="stat-label">Autonomía mAh</div>
+          <div class="stat-box">
+            <div class="stat-label">Autonomia (mAh)</div>
             <div class="stat-value" id="hours_mAh">—</div>
-            <div class="stat-formula">Ah*1k/I</div>
+            <div class="stat-formula">hrs ≈ Ah*1k/I</div>
           </div>
 
-          <div class="flex flex-wrap gap-xs">
+          <div class="btn-group">
             <button class="btn btn-primary" id="calc">CALCULAR</button>
-            <button class="btn btn-secondary" id="exportCSV">CSV</button>
+            <button class="btn btn-secondary" id="exportCSV">EXPORT CSV</button>
           </div>
-
-          <footer>
-            <p>Tip: Estimaciones. Usa INA219 para precisión.</p>
-          </footer>
         </div>
-      </aside>
-
+        <div class="panel-footer">
+          Los resultados son estimaciones. Para mediciones precisas utilizar sensores INA219 o INA226.
+        </div>
+      </div>
     </div>
+
   </div>
 
   <script>
