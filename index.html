@@ -6,190 +6,356 @@
   <title>Calculadora de consumo energético — MCU + sensores</title>
   <link rel="stylesheet" href="sebasdv-design-system.css" />
   <style>
-    /* === CUSTOM CALCULATOR LAYOUT === */
+    /* === NO-SCROLL LAYOUT === */
+    body {
+      padding: var(--spacing-xs);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      max-height: 100vh;
+      overflow: hidden;
+      padding: 0;
+    }
+
+    /* === COMPACT HEADER === */
+    .page-header {
+      flex-shrink: 0;
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .page-header .card {
+      margin-bottom: 0;
+      padding: var(--spacing-sm);
+    }
+
+    .page-header h1 {
+      font-size: var(--font-size-lg);
+      margin-bottom: var(--spacing-2xs);
+    }
+
+    .lead {
+      font-size: var(--font-size-xs);
+      color: var(--gb-text-secondary);
+      line-height: 1.4;
+      margin-bottom: 0;
+    }
+
+    /* === THREE COLUMN GRID === */
     .calc-grid {
       display: grid;
-      grid-template-columns: 1fr 400px;
-      gap: var(--spacing-md);
-      margin-bottom: var(--spacing-md);
+      grid-template-columns: 1fr 1fr 340px;
+      gap: var(--spacing-xs);
+      flex: 1;
+      overflow: hidden;
+      min-height: 0;
     }
 
-    @media (max-width: 768px) {
-      .calc-grid {
-        grid-template-columns: 1fr;
-      }
+    /* === COMPACT CARDS === */
+    .card {
+      padding: var(--spacing-sm);
+      margin-bottom: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
     }
 
-    /* === STICKY RESULTS PANEL === */
-    .results {
-      position: sticky;
-      top: var(--spacing-md);
+    .card-header {
+      font-size: var(--font-size-md);
+      margin-bottom: var(--spacing-xs);
+      padding-bottom: var(--spacing-2xs);
     }
 
-    @media (max-width: 768px) {
-      .results {
-        position: static;
-      }
+    .card-header h2 {
+      font-size: var(--font-size-md);
+      margin-bottom: 0;
     }
 
-    /* === STATS COMPONENTS === */
+    /* === SCROLLABLE SECTIONS === */
+    .scrollable-content {
+      overflow-y: auto;
+      flex: 1;
+      padding-right: var(--spacing-2xs);
+    }
+
+    .scrollable-content::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .scrollable-content::-webkit-scrollbar-track {
+      background: var(--gb-secondary);
+    }
+
+    .scrollable-content::-webkit-scrollbar-thumb {
+      background: var(--gb-accent);
+      border-radius: 3px;
+    }
+
+    /* === COMPACT FORMS === */
+    .form-group {
+      margin-bottom: var(--spacing-xs);
+    }
+
+    label {
+      font-size: var(--font-size-xs);
+      margin-bottom: var(--spacing-2xs);
+    }
+
+    input, textarea {
+      font-size: var(--font-size-xs);
+      padding: var(--spacing-2xs) var(--spacing-xs);
+      min-height: 32px;
+    }
+
+    textarea {
+      min-height: 60px;
+      resize: none;
+    }
+
+    /* === COMPACT TABLE === */
+    table {
+      font-size: var(--font-size-xs);
+      margin-top: var(--spacing-xs);
+      margin-bottom: var(--spacing-xs);
+    }
+
+    th, td {
+      padding: var(--spacing-2xs);
+    }
+
+    /* === COMPACT BUTTONS === */
+    .btn, button {
+      font-size: var(--font-size-xs);
+      padding: var(--spacing-2xs) var(--spacing-xs);
+      min-height: 32px;
+      min-width: auto;
+      margin-right: var(--spacing-2xs);
+      margin-bottom: var(--spacing-2xs);
+    }
+
+    /* === COMPACT STATS === */
     .stat {
       background: var(--gb-dark);
       color: var(--gb-text-inverse);
-      padding: var(--spacing-md);
-      margin-bottom: var(--spacing-sm);
+      padding: var(--spacing-xs);
+      margin-bottom: var(--spacing-2xs);
       border: var(--border-width) solid var(--gb-border);
     }
 
     .stat-label {
-      font-size: var(--font-size-sm);
-      margin-bottom: var(--spacing-xs);
+      font-size: var(--font-size-xs);
+      margin-bottom: var(--spacing-2xs);
       opacity: 0.8;
       text-transform: uppercase;
-    }
-
-    .stat-value {
-      font-size: var(--font-size-xl);
-      font-weight: bold;
-      text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
       line-height: 1.2;
     }
 
+    .stat-value {
+      font-size: var(--font-size-lg);
+      font-weight: bold;
+      text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
+      line-height: 1.1;
+    }
+
     .stat-formula {
-      font-size: var(--font-size-xs);
-      margin-top: var(--spacing-xs);
+      font-size: 0.65rem;
+      margin-top: var(--spacing-2xs);
       opacity: 0.6;
-      font-style: italic;
+      line-height: 1.2;
+    }
+
+    /* === COMPACT FOOTER === */
+    footer {
+      padding: var(--spacing-2xs);
+      margin-top: var(--spacing-xs);
+      font-size: 0.65rem;
+      line-height: 1.3;
+    }
+
+    footer p {
+      margin-bottom: 0;
     }
 
     /* === SECTION DIVIDERS === */
     .section-divider {
       border-top: var(--border-width) solid var(--gb-border);
-      margin-top: var(--spacing-lg);
-      padding-top: var(--spacing-md);
+      margin-top: var(--spacing-xs);
+      padding-top: var(--spacing-xs);
     }
 
-    /* === LEAD TEXT === */
-    .lead {
-      font-size: var(--font-size-sm);
-      color: var(--gb-text-secondary);
-      line-height: 1.8;
-      margin-bottom: var(--spacing-md);
+    /* === RESPONSIVE BREAKPOINT === */
+    @media (max-width: 1400px) {
+      .calc-grid {
+        grid-template-columns: 1fr 300px;
+      }
+
+      .wokwi-section {
+        grid-column: 1;
+      }
+
+      .battery-components-section {
+        grid-column: 1;
+      }
+
+      .results {
+        grid-column: 2;
+        grid-row: 1 / 3;
+      }
+    }
+
+    @media (max-width: 768px) {
+      body {
+        overflow-y: auto;
+        height: auto;
+      }
+
+      .calc-grid {
+        grid-template-columns: 1fr;
+        overflow-y: auto;
+      }
+
+      .results {
+        grid-column: 1;
+        grid-row: auto;
+      }
+
+      .scrollable-content {
+        overflow-y: visible;
+      }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <header class="card">
-      <div class="card-header">
-        <h1>POWER CALC</h1>
+    <!-- Compact Header -->
+    <header class="page-header">
+      <div class="card">
+        <h1>⚡ POWER CALC</h1>
+        <p class="lead">Calculadora de consumo energético para MCU, sensores y actuadores con integración Wokwi</p>
       </div>
-      <p class="lead">Calculadora de consumo energético para MCU y sensores. Pensado para ESP32, Arduino y actuadores. Incluye integración con Wokwi.</p>
     </header>
 
+    <!-- Three Column Layout -->
     <div class="calc-grid">
-      <section class="card">
+
+      <!-- Column 1: Wokwi Import -->
+      <section class="card wokwi-section">
         <div class="card-header">
           <h2>WOKWI IMPORT</h2>
         </div>
+        <div class="scrollable-content">
+          <div class="form-group">
+            <label>URL (opcional)</label>
+            <input id="wokwi_url" type="text" placeholder="https://wokwi.com/projects/..." />
+          </div>
 
-        <div class="form-group">
-          <label>URL del proyecto Wokwi (opcional)</label>
-          <input id="wokwi_url" type="text" placeholder="https://wokwi.com/projects/..." />
+          <div class="form-group">
+            <label>diagram.json</label>
+            <textarea id="wokwi_json" rows="3" placeholder='{"version": 1, "parts": [...]}'></textarea>
+          </div>
+
+          <button class="btn btn-primary" id="parseWokwi">CARGAR</button>
         </div>
+      </section>
 
-        <div class="form-group">
-          <label>Pegar diagram.json</label>
-          <textarea id="wokwi_json" rows="4" placeholder='{"version": 1, "parts": [...], "connections": [...]}'></textarea>
+      <!-- Column 2: Battery & Components -->
+      <section class="card battery-components-section">
+        <div class="card-header">
+          <h2>BATERIA & COMPONENTES</h2>
         </div>
+        <div class="scrollable-content">
 
-        <button class="btn btn-primary" id="parseWokwi">CARGAR WOKWI</button>
-
-        <div class="section-divider">
-          <h2 class="mb-md">BATERIA</h2>
-
+          <!-- Battery Section -->
           <div class="form-group">
             <label>Capacidad (mAh)</label>
             <input id="batt_mAh" type="number" value="6800" min="1" />
           </div>
 
           <div class="form-group">
-            <label>Voltaje nominal (V)</label>
+            <label>Voltaje (V)</label>
             <input id="batt_V" type="number" step="0.1" value="3.7" />
           </div>
 
           <div class="form-group">
-            <label>Eficiencia (0-1)</label>
+            <label>Eficiencia</label>
             <input id="eff" type="number" step="0.01" value="0.90" min="0.5" max="1" />
           </div>
-        </div>
 
-        <div class="section-divider">
-          <h2 class="mb-md">COMPONENTES</h2>
+          <div class="section-divider"></div>
 
+          <!-- Components Table -->
           <table aria-label="tabla componentes">
             <thead>
-              <tr><th>Nombre</th><th>V</th><th>mA</th><th>Duty%</th><th>Acción</th></tr>
+              <tr><th>Nombre</th><th>V</th><th>mA</th><th>Duty%</th><th></th></tr>
             </thead>
             <tbody id="rows"></tbody>
           </table>
 
-          <div class="flex flex-wrap gap-xs mt-md">
+          <div class="flex flex-wrap gap-xs">
             <button class="btn" id="addRow">+ AÑADIR</button>
             <button class="btn btn-secondary" id="clearAll">LIMPIAR</button>
           </div>
 
-          <div class="form-group mt-md">
-            <label>Comentarios (opcional)</label>
+          <div class="form-group">
+            <label>Notas</label>
             <input id="note" type="text" placeholder="ej. medir con INA219" />
           </div>
         </div>
       </section>
 
+      <!-- Column 3: Results -->
       <aside class="card results">
         <div class="card-header">
           <h2>RESULTADOS</h2>
         </div>
+        <div class="scrollable-content">
+          <div class="stat">
+            <div class="stat-label">Corriente Total</div>
+            <div class="stat-value" id="I_total_mA">—</div>
+            <div class="stat-formula">Σ(I·duty)</div>
+          </div>
 
-        <div class="stat">
-          <div class="stat-label">Corriente media total</div>
-          <div class="stat-value" id="I_total_mA">—</div>
-          <div class="stat-formula">Σ(I·duty)</div>
+          <div class="stat">
+            <div class="stat-label">Potencia</div>
+            <div class="stat-value" id="P_total_W">—</div>
+            <div class="stat-formula">Σ(V·I_avg)</div>
+          </div>
+
+          <div class="stat">
+            <div class="stat-label">Energía Bat.</div>
+            <div class="stat-value" id="Wh_batt">—</div>
+            <div class="stat-formula">V·Ah</div>
+          </div>
+
+          <div class="stat">
+            <div class="stat-label">Autonomía Wh</div>
+            <div class="stat-value" id="hours_wh">—</div>
+            <div class="stat-formula">Wh/(P/eff)</div>
+          </div>
+
+          <div class="stat">
+            <div class="stat-label">Autonomía mAh</div>
+            <div class="stat-value" id="hours_mAh">—</div>
+            <div class="stat-formula">Ah*1k/I</div>
+          </div>
+
+          <div class="flex flex-wrap gap-xs">
+            <button class="btn btn-primary" id="calc">CALCULAR</button>
+            <button class="btn btn-secondary" id="exportCSV">CSV</button>
+          </div>
+
+          <footer>
+            <p>Tip: Estimaciones. Usa INA219 para precisión.</p>
+          </footer>
         </div>
-
-        <div class="stat">
-          <div class="stat-label">Potencia total en carga</div>
-          <div class="stat-value" id="P_total_W">—</div>
-          <div class="stat-formula">P = Σ(V·I_avg)</div>
-        </div>
-
-        <div class="stat">
-          <div class="stat-label">Energía batería</div>
-          <div class="stat-value" id="Wh_batt">—</div>
-          <div class="stat-formula">Wh = V·Ah</div>
-        </div>
-
-        <div class="stat">
-          <div class="stat-label">Autonomía (método Wh)</div>
-          <div class="stat-value" id="hours_wh">—</div>
-          <div class="stat-formula">hrs = Wh/(P/eff)</div>
-        </div>
-
-        <div class="stat">
-          <div class="stat-label">Autonomía (método mAh)</div>
-          <div class="stat-value" id="hours_mAh">—</div>
-          <div class="stat-formula">hrs ≈ Ah*1k/I</div>
-        </div>
-
-        <div class="flex flex-wrap gap-xs mt-md">
-          <button class="btn btn-primary" id="calc">CALCULAR</button>
-          <button class="btn btn-secondary" id="exportCSV">EXPORT CSV</button>
-        </div>
-
-        <footer class="mt-lg">
-          <p class="text-xs">Tip: Los resultados son estimaciones. Para medición precisa usar INA219/INA226.</p>
-        </footer>
       </aside>
+
     </div>
   </div>
 
