@@ -229,6 +229,54 @@
         overflow-y: visible;
       }
     }
+
+    /* === DARK MODE TOGGLE === */
+    .theme-toggle-wrapper {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+      margin-left: auto;
+    }
+
+    .theme-toggle {
+      position: relative;
+      width: 50px;
+      height: 24px;
+      background: var(--gb-secondary);
+      border: var(--border-width) solid var(--gb-border);
+      cursor: pointer;
+      transition: var(--transition-fast);
+    }
+
+    .theme-toggle-slider {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 16px;
+      height: 16px;
+      background: var(--gb-dark);
+      transition: var(--transition-fast);
+    }
+
+    .theme-toggle.active .theme-toggle-slider {
+      transform: translateX(24px);
+    }
+
+    .theme-toggle-label {
+      font-size: var(--font-size-xs);
+      text-transform: uppercase;
+      user-select: none;
+    }
+
+    .page-header .card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header-content {
+      flex: 1;
+    }
   </style>
 </head>
 <body>
@@ -236,8 +284,16 @@
     <!-- Compact Header -->
     <header class="page-header">
       <div class="card">
-        <h1>POWER CALC</h1>
-        <p class="lead">Calculadora de consumo energético para MCU, sensores y actuadores con integración Wokwi</p>
+        <div class="header-content">
+          <h1>POWER CALC</h1>
+          <p class="lead">Calculadora de consumo energético para MCU, sensores y actuadores con integración Wokwi</p>
+        </div>
+        <div class="theme-toggle-wrapper">
+          <span class="theme-toggle-label">DARK</span>
+          <div class="theme-toggle" id="themeToggle">
+            <div class="theme-toggle-slider"></div>
+          </div>
+        </div>
       </div>
     </header>
 
@@ -360,6 +416,29 @@
   </div>
 
   <script>
+    // Dark Mode Toggle
+    const themeToggle = document.getElementById('themeToggle');
+    const savedTheme = localStorage.getItem('theme');
+
+    // Apply saved theme on load
+    if (savedTheme === 'dark') {
+      document.body.classList.add('dark-mode');
+      themeToggle.classList.add('active');
+    }
+
+    // Toggle theme
+    themeToggle.addEventListener('click', () => {
+      document.body.classList.toggle('dark-mode');
+      themeToggle.classList.toggle('active');
+
+      // Save preference
+      if (document.body.classList.contains('dark-mode')) {
+        localStorage.setItem('theme', 'dark');
+      } else {
+        localStorage.setItem('theme', 'light');
+      }
+    });
+
     // Base de datos de consumo típico de componentes Wokwi
     const WOKWI_COMPONENT_SPECS = {
       // Microcontroladores
