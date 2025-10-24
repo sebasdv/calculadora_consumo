@@ -6,18 +6,21 @@
   <title>Calculadora de consumo energético — MCU + sensores</title>
   <link rel="stylesheet" href="sebasdv-design-system.css" />
   <style>
-    /* Custom layout for calculator */
-    .grid {
+    /* === CUSTOM CALCULATOR LAYOUT === */
+    .calc-grid {
+      display: grid;
       grid-template-columns: 1fr 400px;
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-md);
     }
 
     @media (max-width: 768px) {
-      .grid {
+      .calc-grid {
         grid-template-columns: 1fr;
       }
     }
 
-    /* Custom styles for results panel */
+    /* === STICKY RESULTS PANEL === */
     .results {
       position: sticky;
       top: var(--spacing-md);
@@ -29,18 +32,11 @@
       }
     }
 
-    /* Custom styles for lead text */
-    .lead {
-      font-size: var(--font-size-sm);
-      color: var(--gb-text-secondary);
-      line-height: 1.8;
-    }
-
-    /* Custom styles for stats */
+    /* === STATS COMPONENTS === */
     .stat {
       background: var(--gb-dark);
       color: var(--gb-text-inverse);
-      padding: var(--spacing-sm);
+      padding: var(--spacing-md);
       margin-bottom: var(--spacing-sm);
       border: var(--border-width) solid var(--gb-border);
     }
@@ -49,24 +45,36 @@
       font-size: var(--font-size-sm);
       margin-bottom: var(--spacing-xs);
       opacity: 0.8;
+      text-transform: uppercase;
     }
 
     .stat-value {
-      font-size: var(--font-size-lg);
+      font-size: var(--font-size-xl);
       font-weight: bold;
-      text-shadow: 1px 1px 0 var(--gb-primary);
+      text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
+      line-height: 1.2;
     }
 
     .stat-formula {
       font-size: var(--font-size-xs);
       margin-top: var(--spacing-xs);
       opacity: 0.6;
+      font-style: italic;
     }
 
-    /* Ensure ghost button works correctly */
-    .btn.ghost {
-      background: transparent;
-      box-shadow: none;
+    /* === SECTION DIVIDERS === */
+    .section-divider {
+      border-top: var(--border-width) solid var(--gb-border);
+      margin-top: var(--spacing-lg);
+      padding-top: var(--spacing-md);
+    }
+
+    /* === LEAD TEXT === */
+    .lead {
+      font-size: var(--font-size-sm);
+      color: var(--gb-text-secondary);
+      line-height: 1.8;
+      margin-bottom: var(--spacing-md);
     }
   </style>
 </head>
@@ -79,45 +87,63 @@
       <p class="lead">Calculadora de consumo energético para MCU y sensores. Pensado para ESP32, Arduino y actuadores. Incluye integración con Wokwi.</p>
     </header>
 
-    <div class="grid">
+    <div class="calc-grid">
       <section class="card">
         <div class="card-header">
           <h2>WOKWI IMPORT</h2>
         </div>
-        <label>URL del proyecto Wokwi (opcional)</label>
-        <input id="wokwi_url" type="text" placeholder="https://wokwi.com/projects/..." />
-        <label>Pegar diagram.json</label>
-        <textarea id="wokwi_json" rows="4" placeholder='{"version": 1, "parts": [...], "connections": [...]}'></textarea>
+
+        <div class="form-group">
+          <label>URL del proyecto Wokwi (opcional)</label>
+          <input id="wokwi_url" type="text" placeholder="https://wokwi.com/projects/..." />
+        </div>
+
+        <div class="form-group">
+          <label>Pegar diagram.json</label>
+          <textarea id="wokwi_json" rows="4" placeholder='{"version": 1, "parts": [...], "connections": [...]}'></textarea>
+        </div>
+
         <button class="btn btn-primary" id="parseWokwi">CARGAR WOKWI</button>
 
-        <div class="card-header mt-md">
-          <h2>BATERIA</h2>
-        </div>
-        <label>Capacidad (mAh)</label>
-        <input id="batt_mAh" type="number" value="6800" min="1" />
-        <label>Voltaje nominal (V)</label>
-        <input id="batt_V" type="number" step="0.1" value="3.7" />
-        <label>Eficiencia (0-1)</label>
-        <input id="eff" type="number" step="0.01" value="0.90" min="0.5" max="1" />
+        <div class="section-divider">
+          <h2 class="mb-md">BATERIA</h2>
 
-        <div class="card-header mt-md">
-          <h2>COMPONENTES</h2>
-        </div>
+          <div class="form-group">
+            <label>Capacidad (mAh)</label>
+            <input id="batt_mAh" type="number" value="6800" min="1" />
+          </div>
 
-        <table aria-label="tabla componentes">
-          <thead>
-            <tr><th>Nombre</th><th>V</th><th>mA</th><th>Duty%</th><th>Acción</th></tr>
-          </thead>
-          <tbody id="rows"></tbody>
-        </table>
+          <div class="form-group">
+            <label>Voltaje nominal (V)</label>
+            <input id="batt_V" type="number" step="0.1" value="3.7" />
+          </div>
 
-        <div class="flex flex-wrap mt-md">
-          <button class="btn" id="addRow">+ AÑADIR</button>
-          <button class="btn ghost" id="clearAll">LIMPIAR</button>
+          <div class="form-group">
+            <label>Eficiencia (0-1)</label>
+            <input id="eff" type="number" step="0.01" value="0.90" min="0.5" max="1" />
+          </div>
         </div>
 
-        <label class="mt-md">Comentarios (opcional)</label>
-        <input id="note" type="text" placeholder="ej. medir con INA219" />
+        <div class="section-divider">
+          <h2 class="mb-md">COMPONENTES</h2>
+
+          <table aria-label="tabla componentes">
+            <thead>
+              <tr><th>Nombre</th><th>V</th><th>mA</th><th>Duty%</th><th>Acción</th></tr>
+            </thead>
+            <tbody id="rows"></tbody>
+          </table>
+
+          <div class="flex flex-wrap gap-xs mt-md">
+            <button class="btn" id="addRow">+ AÑADIR</button>
+            <button class="btn btn-secondary" id="clearAll">LIMPIAR</button>
+          </div>
+
+          <div class="form-group mt-md">
+            <label>Comentarios (opcional)</label>
+            <input id="note" type="text" placeholder="ej. medir con INA219" />
+          </div>
+        </div>
       </section>
 
       <aside class="card results">
@@ -155,13 +181,13 @@
           <div class="stat-formula">hrs ≈ Ah*1k/I</div>
         </div>
 
-        <div class="flex flex-wrap mt-md">
+        <div class="flex flex-wrap gap-xs mt-md">
           <button class="btn btn-primary" id="calc">CALCULAR</button>
-          <button class="btn" id="exportCSV">EXPORT CSV</button>
+          <button class="btn btn-secondary" id="exportCSV">EXPORT CSV</button>
         </div>
 
-        <footer>
-          Tip: Los resultados son estimaciones. Para medición precisa usar INA219/INA226.
+        <footer class="mt-lg">
+          <p class="text-xs">Tip: Los resultados son estimaciones. Para medición precisa usar INA219/INA226.</p>
         </footer>
       </aside>
     </div>
@@ -228,7 +254,7 @@
         <td><input class="V" type="number" step="0.1" value="${data.V}" /></td>
         <td><input class="I" type="number" step="0.1" value="${data.I}" /></td>
         <td><input class="duty" type="number" step="0.1" value="${data.duty}" min="0" max="100" /></td>
-        <td class="row-actions"><button class="btn ghost del">DEL</button></td>
+        <td class="row-actions"><button class="btn btn-danger text-xs del">DEL</button></td>
       `;
       rowsEl.appendChild(tr);
       tr.querySelector('.del').addEventListener('click', ()=>{tr.remove();});
